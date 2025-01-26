@@ -2,17 +2,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import imageio
-
 import os
-from skimage.draw import circle
-
+from skimage.draw import disk
 import matplotlib.pyplot as plt
 import collections
 
-
 class Logger:
     def __init__(self, log_dir, checkpoint_freq=100, visualizer_params=None, zfill_num=8, log_file_name='log.txt'):
-
         self.loss_list = []
         self.cpk_dir = log_dir
         self.visualizations_dir = os.path.join(log_dir, 'train-vis')
@@ -28,10 +24,8 @@ class Logger:
 
     def log_scores(self, loss_names):
         loss_mean = np.array(self.loss_list).mean(axis=0)
-
         loss_string = "; ".join(["%s - %.5f" % (name, value) for name, value in zip(loss_names, loss_mean)])
         loss_string = str(self.epoch).zfill(self.zfill_num) + ") " + loss_string
-
         print(loss_string, file=self.log_file)
         self.loss_list = []
         self.log_file.flush()
@@ -59,7 +53,7 @@ class Logger:
             try:
                discriminator.load_state_dict(checkpoint['discriminator'])
             except:
-               print ('No discriminator in the state-dict. Dicriminator will be randomly initialized')
+               print ('No discriminator in the state-dict. Discriminator will be randomly initialized')
         if optimizer_generator is not None:
             optimizer_generator.load_state_dict(checkpoint['optimizer_generator'])
         if optimizer_discriminator is not None:
@@ -107,7 +101,7 @@ class Visualizer:
         kp_array = spatial_size * (kp_array + 1) / 2
         num_kp = kp_array.shape[0]
         for kp_ind, kp in enumerate(kp_array):
-            rr, cc = circle(kp[1], kp[0], self.kp_size, shape=image.shape[:2])
+            rr, cc = disk((kp[1], kp[0]), self.kp_size, shape=image.shape[:2])
             image[rr, cc] = np.array(self.colormap(kp_ind / num_kp))[:3]
         return image
 
@@ -167,8 +161,7 @@ class Visualizer:
             images.append((prediction, kp_norm))
         images.append(prediction)
 
-
-        ## Occlusion map
+        # Occlusion map
         if 'occlusion_map' in out:
             occlusion_map = out['occlusion_map'].data.cpu().repeat(1, 3, 1, 1)
             occlusion_map = F.interpolate(occlusion_map, size=source.shape[1:3]).numpy()

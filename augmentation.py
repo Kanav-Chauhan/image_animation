@@ -1,6 +1,7 @@
 import numpy as np
 from skimage.transform import resize
 from skimage.util import random_noise
+from skimage.draw import disk
 
 class AllAugmentationTransform:
     def __init__(self, **kwargs):
